@@ -27,8 +27,8 @@ module Razorpay
           timeout: 30,
           headers: headers
         }
-        headers['Authorization'] = 'Bearer ' + Razorpay.access_token 
-      else 
+        headers['Authorization'] = 'Bearer ' + Razorpay.access_token
+      else
         @options = {
           basic_auth: Razorpay.auth,
           timeout: 30,
@@ -52,7 +52,7 @@ module Razorpay
     def get(url, data = {}, version="v1")
       request :get, "/#{version}/#{@entity_name}/#{url}", data
     end
-    
+
     def delete(url, version="v1")
       request :delete, "/#{version}/#{@entity_name}/#{url}"
     end
@@ -73,21 +73,21 @@ module Razorpay
       create_instance raw_request(method, url, data)
     end
 
-    def raw_request(method, url, data = {}) 
+    def raw_request(method, url, data = {})
       case method
       when :get
         @options[:query] = data
       when :post, :put, :patch
         @options[:body] = data
       end
-      
+
       self.class.send(method, url, @options)
     end
 
     def get_base_url(host)
       if host == Razorpay::AUTH_HOST
         return Razorpay::AUTH_URL
-      end 
+      end
       Razorpay::BASE_URI
     end
 
@@ -103,8 +103,18 @@ module Razorpay
 
       if response.is_a?(Array)==true || response.to_s.length == 0
         return response
-      end 
-      
+      end
+
+    # Normalize OAuth string error format into Razorpay's standard hash format
+      if response.is_a?(Hash) && response['error'].is_a?(String)
+        response = {
+          'error' => {
+            'code' => 'BAD_REQUEST_ERROR',
+            'description' => response['error_description'] || response['error']
+          }
+        }
+      end
+
       # if there was an error, throw it
       raise_error(response['error'], res.code) if response.nil? || response.key?('error') && res.code !=200
       # There must be a top level entity
