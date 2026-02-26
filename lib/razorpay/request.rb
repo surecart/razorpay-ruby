@@ -106,11 +106,11 @@ module Razorpay
       end
 
     # Normalize OAuth string error format into Razorpay's standard hash format
-      if response.is_a?(Hash) && response['error'].is_a?(String)
+      if response.is_a?(Hash) && response['error'].is_a?(Hash)
         response = {
           'error' => {
             'code' => 'BAD_REQUEST_ERROR',
-            'description' => response['error_description'] || response['error']
+            'description' => response['error']['description']
           }
         }
       end
@@ -131,6 +131,7 @@ module Razorpay
     end
 
     def raise_error(error, status)
+
       # Get the error class name, require it and instantiate an error
       class_name = error['code'].split('_').map(&:capitalize).join('')
       args = [error['code'], status]
